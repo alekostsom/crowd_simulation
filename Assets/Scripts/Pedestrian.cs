@@ -31,6 +31,8 @@ public class Pedestrian : MonoBehaviour {
 	List<GameObject> closeObjects = new List<GameObject>();
 	public Transform wall;
 
+	Quaternion q, curRot;
+
 	void Start () {
 		Init ();
 	}
@@ -48,7 +50,7 @@ public class Pedestrian : MonoBehaviour {
 		finalTargetPos += initPos;
 		curTargetPos = finalTargetPos;
 		//Debug.Log (curPos + " " + curTargetPos);
-
+		UpdateDirections ();
 		initSpeed = Random.Range (2, 10);
 		timeIntervel = initSpeed;
 
@@ -60,9 +62,12 @@ public class Pedestrian : MonoBehaviour {
 
 	void Update () {
 		distCovered += Time.deltaTime;
-		transform.position = Vector3.Lerp (curPos, curTargetPos, distCovered/timeIntervel); 
+		//transform.position = Vector3.Lerp (curPos, curTargetPos, distCovered/timeIntervel); 
+		transform.Translate (Vector3.forward * Time.deltaTime, Space.Self);
 
-		Debug.Log (Mathf.Abs(wall.position.x - transform.position.x));
+		//transform.rotation = Quaternion.Slerp (transform.rotation, q, Time.deltaTime * 10);
+
+		//Debug.Log (Mathf.Abs(wall.position.x - transform.position.x));
 		if (Mathf.Abs (wall.position.x - transform.position.x) < 1.0f) {
 			if ((wall.position.x - transform.position.x) > 0)
 				UpdateSetupX(-10.0f,0.0f);
@@ -80,17 +85,35 @@ public class Pedestrian : MonoBehaviour {
 		//StartCoroutine (UpdateSetup ());
 		curPos = transform.position;
 
-		finalTargetPos.x = Random.Range (-10, 10);
+		finalTargetPos.x = Random.Range (-2, 2);
 		finalTargetPos.y = 0;
-		finalTargetPos.z = Random.Range (-10, 10);
+		finalTargetPos.z = 0;
+		//finalTargetPos.z = Random.Range (-10, 10);
 		finalTargetPos += curPos;
 		curTargetPos = finalTargetPos;
 		//Debug.Log (curPos + " " + curTargetPos);
-		
+		UpdateDirections ();
 		initSpeed = Random.Range (2, 10);
 		timeIntervel = initSpeed;
 		distCovered = 0.0f;		
+
+		Debug.Log (curTargetPos);
 		//Debug.Log (curPos + " " + curTargetPos + " " + initSpeed + " " + radius);
+	}
+
+	public void UpdateDirections()
+	{
+		curRot = transform.rotation;
+		/*Vector3 vectorToTarget = curTargetPos - transform.position;
+		float angle = Mathf.Atan2 (vectorToTarget.z, vectorToTarget.x) * Mathf.Rad2Deg;
+		Quaternion q = Quaternion.AngleAxis (angle, -Vector3.up);
+		transform.rotation = Quaternion.Slerp (transform.rotation, q, Time.deltaTime * 10);*/
+		Vector3 relative = transform.InverseTransformPoint(curTargetPos);
+		float angle = Mathf.Atan2(relative.x, relative.z) * Mathf.Rad2Deg;
+		transform.Rotate(0, angle, 0);
+		//q = Quaternion.AngleAxis (angle, Vector3.up);
+		//Debug.Log (q);
+
 	}
 
 	public void UpdateSetupX(float min, float max)
@@ -109,7 +132,7 @@ public class Pedestrian : MonoBehaviour {
 		finalTargetPos += curPos;
 		curTargetPos = finalTargetPos;
 		//Debug.Log (curPos + " " + curTargetPos);
-		
+		UpdateDirections ();
 		initSpeed = Random.Range (2, 10);
 		timeIntervel = initSpeed;
 		distCovered = 0.0f;		
