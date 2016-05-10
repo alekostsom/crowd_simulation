@@ -1,23 +1,16 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Door : MonoBehaviour { //Door Objects that determine whether the pedestrian reached its destination or not.
+public class Door : MonoBehaviour { 
+	//Door Objects that determine whether the pedestrian reached its destination or not.
 
 
-	// Use this for initialization
-	void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		
-	}
 
 	void OnTriggerEnter(Collider col)
 	{
 		if (col.gameObject.tag == "Pedestrian") {
-			Debug.Log ("Reached");
+			//Debug.Log ("Reached");
+			col.GetComponent<Pedestrian>().ReachedGoal();
 			Destroy(col.gameObject);
 		}
 	}
@@ -25,9 +18,11 @@ public class Door : MonoBehaviour { //Door Objects that determine whether the pe
 	void OnTriggerExit(Collider col)
 	{
 		if (col.gameObject.tag != "Pedestrian") {
-			Debug.Log ("Exited");
+			//Debug.Log ("Exited");
 			col.gameObject.tag = "Pedestrian";
-			col.GetComponent<MeshRenderer>().enabled = true;
+			col.GetComponentInChildren<MeshRenderer>().enabled = true;
+			col.GetComponent<Pedestrian>().IsInPath = true;
+			StartCoroutine( col.GetComponent<Pedestrian>().LeaveTraces() );
 			//Destroy(col.gameObject);
 		}
 	}

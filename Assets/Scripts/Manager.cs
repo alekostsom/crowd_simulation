@@ -1,8 +1,11 @@
 ﻿using UnityEngine;
+using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
 
 public class Manager : MonoBehaviour {
+
+	public static Manager instance;
 
 	//Pedestrian prefab model TODO or list of different models
 	public GameObject pedPrefab;
@@ -20,15 +23,24 @@ public class Manager : MonoBehaviour {
 	public GameObject startPosParent;
 	StartPos[] startingPositions;
 
+	//Write information to files
+	string filenameDis = "Distance";
+	System.IO.StreamWriter fileDis;
+
+	void Awake()
+	{
+		//Initialise singleton instance
+		instance = this;
+	}
 
 	void Start () {
 		//Store all the starting positions to the array
 		startingPositions = startPosParent.GetComponentsInChildren<StartPos> ();
-		Debug.Log (startingPositions.Length); //Check if all the desired hotspots are included
+		//Debug.Log (startingPositions.Length); //Check if all the desired hotspots are included
 
 		//Store all the hotspots to the array
 		destinations = destinationsParent.GetComponentsInChildren<Destination> ();
-		Debug.Log (destinations.Length); //Check if all the desired hotspots are included
+		//Debug.Log (destinations.Length); //Check if all the desired hotspots are included
 
 		//Now.. Instantiate pedestrians and add them to the active list
 		for (int i=0; i<density; i++) {
@@ -39,18 +51,29 @@ public class Manager : MonoBehaviour {
 
 			//go.GetComponent<Pedestrian>().agent.SetDestination(destinations[Random.Range(0, destinations.Length)].transform.position);
 		}
-		Debug.Log (pedestrians.Count);
+		//Debug.Log (pedestrians.Count);
 
+		/*Destination[] tmpDests = destinations;
+		Debug.Log (ArrayUtility.IndexOf(tmpDests, destinations[5]));*/
 		//Do something for every pedestrian
 		foreach (Pedestrian ped in pedestrians)
 		{
 			//Set the destination for each pedestrian
-			ped.Agent.SetDestination (destinations[Random.Range(0, destinations.Length)].transform.position);
+			Vector3 targetPos = destinations[Random.Range(0, destinations.Length)].transform.position;
+			ped.FinalTargetPos = targetPos;
+			//ped.Agent.SetDestination (destinations[Random.Range(0, destinations.Length)].transform.position);
 		}
+
+		//Open files to store information
+		fileDis = new System.IO.StreamWriter("C:\\Users\\Alexandros\\Documents\\" + filenameDis + ".txt");
 	}
-	
-	// Update is called once per frame
-	void Update () {
-	
+
+	void OnApplicationQuit() {
+		fileDis.Close ();
+	}
+
+	public void WriteDis(float dis)
+	{
+		fileDis.WriteLine(dis);
 	}
 }
