@@ -8,7 +8,12 @@ public class Pedestrian : MonoBehaviour {
 	Manager managerInstance; 
 
 	//Initial position and current position
-	private Vector3 initPos = new Vector3();
+	private Vector3 startingPos = new Vector3();
+	public Vector3 StartingPos
+	{
+		get { return startingPos;}
+		set { startingPos = value;}
+	}
 	private Vector3 curPos = new Vector3();
 
 	//Initial final destination and current destination (GOAL)
@@ -97,8 +102,6 @@ public class Pedestrian : MonoBehaviour {
 			finalTargetPos = target.transform.position;
 
 		agent.SetDestination (finalTargetPos);
-		//Debug.Log("Distance to Cover: " + PathLength (agent.path));
-		//Debug.Log (curPos + " " + curTargetPos + " " + initSpeed + " " + radius);
 	}
 
 	void Update () {

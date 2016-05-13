@@ -44,23 +44,27 @@ public class Manager : MonoBehaviour {
 
 		//Now.. Instantiate pedestrians and add them to the active list
 		for (int i=0; i<density; i++) {
-			Vector3 startPos = startingPositions[Random.Range(0, startingPositions.Length)].transform.position; //Randomly pick a starting position
+			//Randomly pick a starting position
+			int startPosIndex = Random.Range(0, startingPositions.Length);
+			Vector3 startPos = startingPositions[startPosIndex].transform.position; 
+			//Instantiate the pedestrian prefab
 			GameObject go = GameObject.Instantiate(pedPrefab, startPos, Quaternion.identity) as GameObject;
 
-			pedestrians.Add(go.GetComponent<Pedestrian>()); //Add the pedestrian component to the list
-
-			//go.GetComponent<Pedestrian>().agent.SetDestination(destinations[Random.Range(0, destinations.Length)].transform.position);
+			Pedestrian ped = go.GetComponent<Pedestrian>();//Get the pedestrian component reference
+			pedestrians.Add(ped); //Add the pedestrian component to the list
+			ped.StartingPos = startPos; //Assign the starting Position
 		}
-		//Debug.Log (pedestrians.Count);
 
-		/*Destination[] tmpDests = destinations;
-		Debug.Log (ArrayUtility.IndexOf(tmpDests, destinations[5]));*/
 		//Do something for every pedestrian
 		foreach (Pedestrian ped in pedestrians)
 		{
-			//Set the destination for each pedestrian
+			//Set the destination for each pedestrian (Not the same with the starting!)
+			do {
 			Vector3 targetPos = destinations[Random.Range(0, destinations.Length)].transform.position;
 			ped.FinalTargetPos = targetPos;
+				Debug.Log ("Same");
+			}while (ped.FinalTargetPos != ped.StartingPos);
+
 			//ped.Agent.SetDestination (destinations[Random.Range(0, destinations.Length)].transform.position);
 		}
 
