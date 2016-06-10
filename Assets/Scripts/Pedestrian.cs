@@ -33,9 +33,7 @@ public class Pedestrian : MonoBehaviour {
 	private float initDir;
 	private float curDir;
 
-	//Pedestrian comfort zone, in meters (r)
-	private float radius;
-	SphereCollider radSC;
+
 
 	//Variables that count the pedestrian's path in seconds
 	float timeToReachGoal = 0.0f;
@@ -69,12 +67,27 @@ public class Pedestrian : MonoBehaviour {
 
 	Vector3 forward;
 
+	//A list that contains only the possible target positions for the pedestrian
+	List<Vector3> desPosList = new List<Vector3> ();
+
 	//Evaluation variables
 	//float timeToReachGoal;
 	float totalPathLength;
 	float avgSpeed;
 	float totalAcceleration; // movement effort
 	float totalAngleDegrees; // turning effort
+
+	//Socially realistic avoidance (Karamouzas 2010 model)
+
+	//Pedestrian comfort zone, in meters (r)
+	float radius;
+	public SphereCollider radSC;
+	public Transform visualRange;
+
+	public int numOfNearby = 0;
+	public List<Pedestrian> nearbyPedestrians = new List<Pedestrian>();
+	List<Pedestrian> onCollisionCoursePedestrians = new List<Pedestrian>();
+
 
 	void Awake(){
 		//Get a reference to navMesh component. Componet got in Awake because the object is instantiated on realtime.
@@ -90,45 +103,66 @@ public class Pedestrian : MonoBehaviour {
 	//Initialize pedestrian
 	void Init()
 	{
-		//Pick random color for the pedestrian
+		//Pick random color for the pedestrian for a visual variety
 		Color32 color = new Color32 ((byte)Random.Range (0, 255), (byte)Random.Range (0, 255), (byte)Random.Range (0, 255), 1);
 		GetComponentInChildren<MeshRenderer> ().material.color = color;
 		//psomakiPrefab.GetComponent<MeshRenderer> ().material.color = color;
 
-		radSC = GetComponent<SphereCollider> ();
-		radius = radSC.radius;
+		//radSC = GetComponent<SphereCollider> ();
+		radius = Random.Range (5.0f, 12.0f);
+		radSC.radius = radius;
+		if (visualRange != null) {
+			Vector3 sphereSize = new Vector3 (radius * 2, 0.1f, radius * 2);
+			visualRange.localScale = sphereSize;
+		}
+		//Create the list with the possible targets (except the pedestrians' startingPos)
+		foreach (Destination des in managerInstance.destinations) {
+			if (des.transform.position != startingPos) //exclude the same position with the starting
+			{
+				desPosList.Add(des.transform.position);
+			}
+		}
 
-		if (target != null)
-			finalTargetPos = target.transform.position;
+		//Choosea  destination for each pedestrian from the available ones
+		foreach (Vector3 desPos in desPosList)
+		{			
+			finalTargetPos = desPosList[Random.Range(0, desPosList.Count)];
+		}
 
+		//Spread the pedestrians a little around their initial position
+		float randX = Random.Range(-4.0f, 4.0f);
+		float randZ = Random.Range(-4.0f, 4.0f);
+		transform.position = new Vector3(startingPos.x + randX, startingPos.y, startingPos.z + randZ);
+
+		agent.speed = Random.Range (2.5f, 4.5f);
 		agent.SetDestination (finalTargetPos);
+
+		StartCoroutine (CheckForImminentCollisions ());
 	}
 
 	void Update () {
-		//distCovered += Time.deltaTime;
-		//transform.position = Vector3.Lerp (curPos, curTargetPos, distCovered/timeIntervel); 
-		//transform.Translate (Vector3.forward * Time.deltaTime, Space.Self);
-		//transform.rotation = Quaternion.Slerp (transform.rotation, q, Time.deltaTime * 10);
 
-		//Debug.Log (agent.velocity.ToString() + agent.desiredVelocity.ToString());
+		//Calculate the amount time it takes for a pedestrian to reach his goal
 		if (isInPath) {
 			timeToReachGoal += Time.deltaTime;
 		}
 
-	}
+		/*if (Input.GetKeyDown(KeyCode.Space))
+			agent.velocity = Vector3.zero;
 
-	public void UpdateSetup()
-	{
+		if (Input.GetKeyDown(KeyCode.Return))
+			agent.velocity = Vector3.forward;*/
 	}
 
 	//Actions to be taken when the pedestrian reaches his goal
 	public void ReachedGoal()
 	{
 		isInPath = false;
-		Debug.Log ("Covered: " +CalcPathLengthInMeters () + " meters, in: " + timeToReachGoal + " seconds.");
-		managerInstance.WriteDis (CalcPathLengthInMeters ());
+		Debug.Log ("Covered: " +CalcPathLengthInMeters () + " meters, in: " + timeToReachGoal + " seconds. \nFrom: " + startingPos + " to: " + finalTargetPos);
+		managerInstance.WriteDis (CalcPathLengthInMeters (), timeToReachGoal);
 	}
 
+	//Calculate the distance that the pedestrian covered.
 	float CalcPathLengthInMeters() {
 
 		if (traces.Count < 2)
@@ -146,12 +180,39 @@ public class Pedestrian : MonoBehaviour {
 		return lengthSoFar;
 	}
 
+	//Create an array of path positions
 	public IEnumerator LeaveTraces()
 	{
 		traces.Add (new Vector2 (transform.position.x, transform.position.z));
+
 		//Debug.Log ("traces: " + traces.Count);
 		//Instantiate (psomakiPrefab, transform.position, Quaternion.identity);
 		yield return new WaitForSeconds(0.2f);
 		StartCoroutine (LeaveTraces ());
 	}
+
+	//Wait 1.5 seconds to enable the triggering, because some times the pedestrian exits and re-enters the doors
+	/*public IEnumerator EnableExiting()
+	{
+		yield return new WaitForSeconds(1.5f);
+		
+	}*/	
+
+	public IEnumerator CheckForImminentCollisions()
+	{
+		yield return new WaitForSeconds(1.0f);
+		/*foreach (Pedestrian nearPed in nearbyPedestrians) {
+			//The imminent collision detection code goes here
+			Debug.Log (nearPed.Agent.velocity + " " + nearPed.transform.position);
+
+			float timeToCol;
+			float minDistance = 4;
+
+			timeToCol = (minDistance - (Vector3.Distance(nearPed.transform.position, transform.position)))/(Vector3.Distance(nearPed.Agent.velocity, agent.desiredVelocity));
+			Debug.Log (timeToCol);
+		}*/
+
+		StartCoroutine (CheckForImminentCollisions ());
+	}
+
 }

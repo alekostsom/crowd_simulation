@@ -4,7 +4,7 @@ using System.Collections;
 public class Door : MonoBehaviour { 
 	//Door Objects that determine whether the pedestrian reached its destination or not.
 
-
+	GameObject pedGO;
 
 	void OnTriggerEnter(Collider col)
 	{
@@ -17,13 +17,16 @@ public class Door : MonoBehaviour {
 
 	void OnTriggerExit(Collider col)
 	{
-		if (col.gameObject.tag != "Pedestrian") {
-			//Debug.Log ("Exited");
-			col.gameObject.tag = "Pedestrian";
-			col.GetComponentInChildren<MeshRenderer>().enabled = true;
-			col.GetComponent<Pedestrian>().IsInPath = true;
-			StartCoroutine( col.GetComponent<Pedestrian>().LeaveTraces() );
+		if (col.gameObject.tag != "Pedestrian" && col.gameObject.tag != "PedSensor") {
+
+			col.gameObject.GetComponentInChildren<MeshRenderer>().enabled = true;
+			col.gameObject.GetComponent<Pedestrian>().IsInPath = true;
+			StartCoroutine( col.gameObject.GetComponent<Pedestrian>().LeaveTraces() );
+
+			//StartCoroutine(col.gameObject.GetComponent<Pedestrian>().EnableExiting());
 			//Destroy(col.gameObject);
 		}
 	}
+
+
 }

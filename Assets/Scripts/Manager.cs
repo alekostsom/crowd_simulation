@@ -17,15 +17,23 @@ public class Manager : MonoBehaviour {
 
 	//A reference to the hotspots parent object and an array to store them
 	public GameObject destinationsParent;
-	Destination[] destinations;
+	[HideInInspector]
+	public Destination[] destinations;
 	
 	//A reference to the starting positions parent object and an array to store them
 	public GameObject startPosParent;
 	StartPos[] startingPositions;
 
+	//How many seconds to spawn another pedestrian
+	float timeToSpawnNext = 1.0f;
+	public bool spawnAgain = true;
+
 	//Write information to files
 	string filenameDis = "Distance";
 	System.IO.StreamWriter fileDis;
+
+	string filenameTime = "Time";
+	System.IO.StreamWriter fileTime;
 
 	void Awake()
 	{
@@ -44,40 +52,62 @@ public class Manager : MonoBehaviour {
 
 		//Now.. Instantiate pedestrians and add them to the active list
 		for (int i=0; i<density; i++) {
-			//Randomly pick a starting position
-			int startPosIndex = Random.Range(0, startingPositions.Length);
-			Vector3 startPos = startingPositions[startPosIndex].transform.position; 
-			//Instantiate the pedestrian prefab
-			GameObject go = GameObject.Instantiate(pedPrefab, startPos, Quaternion.identity) as GameObject;
-
-			Pedestrian ped = go.GetComponent<Pedestrian>();//Get the pedestrian component reference
-			pedestrians.Add(ped); //Add the pedestrian component to the list
-			ped.StartingPos = startPos; //Assign the starting Position
+			InstantiatePedestrian();
 		}
 
-		//Do something for every pedestrian
-		foreach (Pedestrian ped in pedestrians)
-		{
-			//Set the destination for each pedestrian (Not the same with the starting!)
-			do {
-			Vector3 targetPos = destinations[Random.Range(0, destinations.Length)].transform.position;
-			ped.FinalTargetPos = targetPos;
-				Debug.Log ("Same");
-			}while (ped.FinalTargetPos != ped.StartingPos);
+		StartCoroutine (SpawPedestrian ());
+		StartCoroutine (StopSpawning ());
 
-			//ped.Agent.SetDestination (destinations[Random.Range(0, destinations.Length)].transform.position);
-		}
+		//Do something for every pedestrian?
 
 		//Open files to store information
+		//filenameDis += " " + System.DateTime.Now.Day + System.DateTime.Now.Month + System.DateTime.Now.Year + " " + System.DateTime.Now.Hour + ":" + System.DateTime.Now.Minute;
 		fileDis = new System.IO.StreamWriter("C:\\Users\\Alexandros\\Documents\\" + filenameDis + ".txt");
+		fileTime = new System.IO.StreamWriter("C:\\Users\\Alexandros\\Documents\\" + filenameTime + ".txt");
 	}
 
 	void OnApplicationQuit() {
 		fileDis.Close ();
+		fileTime.Close ();
 	}
 
-	public void WriteDis(float dis)
+	public void WriteDis(float dis, float time)
 	{
 		fileDis.WriteLine(dis);
+		fileTime.WriteLine (time);
+	}
+
+	//Create a new Pedestrian object and place it at one of the available starting positions
+	void InstantiatePedestrian()
+	{
+		//Randomly pick a starting position
+		int startPosIndex = Random.Range(0, startingPositions.Length);
+		
+		Vector3 startPos = startingPositions[startPosIndex].transform.position; 
+		//Instantiate the pedestrian prefab
+		GameObject go = GameObject.Instantiate(pedPrefab, startPos, Quaternion.identity) as GameObject;
+		
+		Pedestrian ped = go.GetComponent<Pedestrian>();//Get the pedestrian component reference
+		pedestrians.Add(ped); //Add the pedestrian component to the list
+		ped.StartingPos = startPos; //Assign the starting Position
+	}
+
+	//Spawn another pedestrian regularly
+	IEnumerator SpawPedestrian()
+	{
+		yield return new WaitForSeconds(timeToSpawnNext);
+		InstantiatePedestrian ();
+
+		timeToSpawnNext = Random.Range (0.05f, 0.25f);
+
+		if (spawnAgain)
+			StartCoroutine (SpawPedestrian ());
+	}
+
+	//Stop spawning new pedestrians after a specific amount of time
+	IEnumerator StopSpawning()
+	{
+		yield return new WaitForSeconds (60);
+		spawnAgain = false;
 	}
 }
