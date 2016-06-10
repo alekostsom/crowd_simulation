@@ -1,3 +1,3 @@
 # crowd_simulation
 
-This project is about simulating crowd's behaviour both as autonomous pedestrians and as groups, under various circumstances. The simulation is based on the "Social Force Model for Pedestrian Dynamics" by D. Helbing.  
+This project is about simulating crowd's behaviour both as autonomous pedestrianss. The simulation is based on the "Reciprosal Velocity Obstacles" by Van Den Berg et al, 2007.  
